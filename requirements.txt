@@ -1,0 +1,31 @@
+# Django
+Django==5.0.1
+django-environ==0.11.2
+
+# Base de datos
+pyodbc==5.0.1
+mssql-django==1.4
+
+# Formularios y validación
+django-crispy-forms==2.1
+crispy-tailwind==1.0.3
+
+# Excel/CSV Export
+openpyxl==3.1.2
+xlsxwriter==3.1.9
+
+# Utilidades
+python-decouple==3.8
+
+# Desarrollo
+django-debug-toolbar==4.2.0
+ipython==8.18.1
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# Producción
+gunicorn==21.2.0
+whitenoise==6.6.0

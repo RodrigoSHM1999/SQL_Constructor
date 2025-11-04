@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ query.nombre }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-file-alt"></i> {{ query.nombre }}
+                </h1>
+                <p class="text-gray-600 mt-2">{{ query.descripcion }}</p>
+                <div class="flex items-center mt-4 space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-calendar"></i> Modificado: {{ query.fecha_modificacion|date:"d/m/Y H:i" }}</span>
+                    {% if query.creado_por %}
+                    <span><i class="fas fa-user"></i> {{ query.creado_por }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                {% if query.activa %}
+                <span class="bg-green-100 text-green-800 text-sm font-semibold px-4 py-2 rounded-full">
+                    <i class="fas fa-check-circle"></i> Activa
+                </span>
+                {% else %}
+                <span class="bg-red-100 text-red-800 text-sm font-semibold px-4 py-2 rounded-full">
+                    <i class="fas fa-times-circle"></i> Inactiva
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'queries:technical_query_edit' query.pk %}" class="btn-primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'queries:technical_query_test' query.pk %}" class="btn-success">
+                <i class="fas fa-vial"></i> Probar Consulta
+            </a>
+            <form method="POST" action="{% url 'queries:technical_query_toggle' query.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition">
+                    <i class="fas fa-power-off"></i> {% if query.activa %}Desactivar{% else %}Activar{% endif %}
+                </button>
+            </form>
+            <form method="POST" action="{% url 'queries:technical_query_delete' query.pk %}" 
+                  onsubmit="return confirm('¿Estás seguro de eliminar esta consulta? Esta acción no se puede deshacer.')" 
+                  class="inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </form>
+            <a href="{% url 'queries:technical_query_list' %}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+    
+    <!-- SELECT Clause -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-columns"></i> Cláusula SELECT
+        </h2>
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <pre class="font-mono text-sm text-gray-800 whitespace-pre-wrap">{{ query.select_clause }}</pre>
+        </div>
+        
+        <!-- Columnas detectadas -->
+        {% if query.get_column_aliases %}
+        <div class="mt-4">
+            <h3 class="font-semibold text-gray-700 mb-2">Columnas del resultado:</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for alias in query.get_column_aliases %}
+                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">
+                    {{ alias }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- FROM Clause -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-database"></i> Cláusula FROM
+        </h2>
+        <div class="bg-gray-50 p-4 rounded-lg mb-4">
+            <pre class="font-mono text-sm text-gray-800 whitespace-pre-wrap">{{ query.from_clause }}</pre>
+        </div>
+        
+        <!-- Preview estructurado -->
+        <div class="border-l-4 border-blue-500 pl-4">
+            <h3 class="font-semibold text-gray-700 mb-3">Vista Previa Estructurada:</h3>
+            <div class="space-y-3">
+                {% for item in from_parsed.preview %}
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-mono text-sm">
+                        <span class="text-2xl">{{ item.icon }}</span>
+                        <span class="font-bold ml-2">{{ item.type }}:</span>
+                        <span class="text-green-600 ml-2">{{ item.table }}</span>
+                        {% if item.alias %}
+                        <span class="text-blue-600 ml-2">AS {{ item.alias }}</span>
+                        {% endif %}
+                    </div>
+                    {% if item.condition %}
+                    <div class="text-sm text-gray-600 ml-12 mt-1">
+                        ON {{ item.condition }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- WHERE Clause -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-filter"></i> Cláusula WHERE
+        </h2>
+        {% if query.where_clause %}
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <pre class="font-mono text-sm text-gray-800 whitespace-pre-wrap">{{ query.where_clause }}</pre>
+        </div>
+        {% else %}
+        <p class="text-gray-500 italic">Sin filtros WHERE (devuelve todos los resultados)</p>
+        {% endif %}
+    </div>
+    
+    <!-- Parámetros -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-sliders-h"></i> Parámetros Configurados ({{ parametros.count }})
+        </h2>
+        
+        {% if parametros %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Posición</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Etiqueta</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre Interno</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for param in parametros %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                                %{{ param.posicion_where }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ param.etiqueta_usuario }}</div>
+                            {% if param.placeholder %}
+                            <div class="text-xs text-gray-500">{{ param.placeholder }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 font-mono">
+                            {{ param.nombre_interno }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-gray-900">{{ param.get_tipo_dato_display }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if param.visible %}
+                            <span class="text-green-600"><i class="fas fa-eye"></i> Visible</span>
+                            {% else %}
+                            <span class="text-gray-400"><i class="fas fa-eye-slash"></i> Oculto</span>
+                            {% endif %}
+                            {% if param.requerido %}
+                            <span class="ml-2 text-red-600"><i class="fas fa-asterisk text-xs"></i> Obligatorio</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500 italic">No hay parámetros configurados para esta consulta.</p>
+        {% endif %}
+    </div>
+    
+    <!-- SQL Preview Completo -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-code"></i> Vista Previa SQL Completo
+        </h2>
+        <div class="bg-gray-900 text-green-400 p-6 rounded-lg overflow-x-auto">
+            <pre class="font-mono text-sm">{{ sql_preview }}</pre>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+<nav class="bg-blue-600 shadow-lg">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center py-4">
+            
+            <!-- Logo -->
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'queries:enduser_query_list' %}" class="text-white text-2xl font-bold">
+                    <i class="fas fa-database"></i> SQL Manager
+                </a>
+            </div>
+            
+            <!-- Menu -->
+            <div class="hidden md:flex space-x-6">
+                <a href="{% url 'queries:enduser_query_list' %}" class="text-white hover:text-blue-200 transition">
+                    <i class="fas fa-play-circle"></i> Ejecutar Consultas
+                </a>
+                <a href="{% url 'queries:technical_query_list' %}" class="text-white hover:text-blue-200 transition">
+                    <i class="fas fa-cog"></i> Gestión Técnica
+                </a>
+            </div>
+            
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button id="mobile-menu-btn" class="text-white focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden pb-4">
+            <a href="{% url 'queries:enduser_query_list' %}" class="block text-white hover:bg-blue-700 px-4 py-2 rounded">
+                <i class="fas fa-play-circle"></i> Ejecutar Consultas
+            </a>
+            <a href="{% url 'queries:technical_query_list' %}" class="block text-white hover:bg-blue-700 px-4 py-2 rounded mt-2">
+                <i class="fas fa-cog"></i> Gestión Técnica
+            </a>
+        </div>
+    </div>
+</nav>
+
+<script>
+    document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+</script>

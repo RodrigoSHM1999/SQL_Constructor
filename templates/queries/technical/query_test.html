@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Probar Consulta - {{ query.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-vial"></i> Probar Consulta: {{ query.nombre }}
+        </h1>
+        <p class="text-gray-600 mt-2">Ejecuta la consulta con valores de prueba</p>
+    </div>
+    
+    <!-- Formulario de parámetros -->
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+        
+        {% if parametros %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-sliders-h"></i> Valores de Parámetros
+            </h2>
+            <p class="text-sm text-gray-600 mb-6">
+                Ingresa valores de prueba para los parámetros. Deja vacío para omitir el filtro.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for param in parametros %}
+                <div>
+                    <label for="param_{{ param.posicion_where }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ param.etiqueta_usuario }}
+                        <span class="text-xs text-gray-500">({{ param.get_tipo_dato_display }})</span>
+                        {% if param.requerido %}
+                        <span class="text-red-500">*</span>
+                        {% endif %}
+                    </label>
+                    
+                    {% if param.tipo_dato == 'boolean' %}
+                    <select id="param_{{ param.posicion_where }}" 
+                            name="param_{{ param.posicion_where }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="1" {% if param.valor_por_defecto == '1' %}selected{% endif %}>Sí</option>
+                        <option value="0" {% if param.valor_por_defecto == '0' %}selected{% endif %}>No</option>
+                    </select>
+                    {% else %}
+                    <input type="{{ param.get_form_field_type }}" 
+                           id="param_{{ param.posicion_where }}"
+                           name="param_{{ param.posicion_where }}"
+                           value="{{ param.valor_por_defecto }}"
+                           {% if param.requerido %}required{% endif %}
+                           placeholder="{{ param.placeholder|default:'Ingrese un valor' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    {% endif %}
+                    
+                    {% if param.placeholder %}
+                    <p class="text-xs text-gray-500 mt-1">{{ param.placeholder }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Botones -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex gap-4">
+                <button type="submit" class="btn-success">
+                    <i class="fas fa-play"></i> Ejecutar Prueba
+                </button>
+                <a href="{% url 'queries:technical_query_detail' query.pk %}" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Resultados -->
+    {% if result %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-table"></i> Resultados de la Prueba
+        </h2>
+        
+        <!-- Info de ejecución -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+            <div class="flex items-center">
+                <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
+                <div>
+                    <p class="text-sm text-blue-800">
+                        <strong>Tiempo de ejecución:</strong> {{ result.execution_time }}s |
+                        <strong>Resultados:</strong> {{ result.total_rows }} fila(s)
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        {% if result.success %}
+            {% if result.data %}
+            <!-- Tabla de resultados -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            {% for column in result.columns %}
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {{ column }}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for row in result.data %}
+                        <tr class="hover:bg-gray-50">
+                            {% for value in row %}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ value|default:"<em class='text-gray-400'>NULL</em>" }}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- SQL Ejecutado -->
+            <div class="mt-6">
+                <h3 class="font-semibold text-gray-700 mb-2">SQL Ejecutado:</h3>
+                <div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+                    <pre class="font-mono text-xs">{{ result.sql }}</pre>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                <p class="text-gray-500">La consulta no devolvió resultados</p>
+            </div>
+            {% endif %}
+        {% else %}
+        <!-- Error -->
+        <div class="bg-red-50 border-l-4 border-red-500 p-4">
+            <div class="flex">
+                <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-red-800">Error al ejecutar la consulta</h3>
+                    <p class="mt-2 text-sm text-red-700">{{ result.error }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}
