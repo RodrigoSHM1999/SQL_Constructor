@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load query_filters %}
 
 {% block title %}Ejecutar - {{ query.nombre }}{% endblock %}
 
@@ -44,19 +45,19 @@
                     </label>
                     
                     {% if param.tipo_dato == 'boolean' %}
-                    <select id="param_{{ param.posicion_where }}" 
+                    <select id="param_{{ param.posicion_where }}"
                             name="param_{{ param.posicion_where }}"
                             {% if param.requerido %}required{% endif %}
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                         <option value="">-- Seleccionar --</option>
-                        <option value="1" {% if param.valor_por_defecto == '1' %}selected{% endif %}>Sí</option>
-                        <option value="0" {% if param.valor_por_defecto == '0' %}selected{% endif %}>No</option>
+                        <option value="1" {% if params_used and params_used|get_item:param.posicion_where == '1' %}selected{% elif not params_used and param.valor_por_defecto == '1' %}selected{% endif %}>Sí</option>
+                        <option value="0" {% if params_used and params_used|get_item:param.posicion_where == '0' %}selected{% elif not params_used and param.valor_por_defecto == '0' %}selected{% endif %}>No</option>
                     </select>
                     {% else %}
-                    <input type="{{ param.get_form_field_type }}" 
+                    <input type="{{ param.get_form_field_type }}"
                            id="param_{{ param.posicion_where }}"
                            name="param_{{ param.posicion_where }}"
-                           value="{{ param.valor_por_defecto }}"
+                           value="{% if params_used %}{{ params_used|get_item:param.posicion_where|default:'' }}{% else %}{{ param.valor_por_defecto }}{% endif %}"
                            {% if param.requerido %}required{% endif %}
                            placeholder="{{ param.placeholder|default:'Opcional' }}"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
